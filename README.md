@@ -20,7 +20,7 @@ yay -S nahimic-linux
 
 也可以使用 `paru -S nahimic-linux`。安装会自动下载所需运行组件、匹配扬声器并启动音效。安装完成后，从应用菜单打开 **Nahimic 音效**，或运行 `nahimic`。首次准备运行环境需要稍等片刻。
 
-目前已验证机械革命无界 14X Pro（Senary 声卡，子系统 ID `1D05E022`）的内置扬声器。需要 x86_64、PipeWire、PipeWire Pulse、WirePlumber 0.5 或更新版本，以及 systemd 用户会话。界面使用 Qt，支持 KDE、GNOME 及其他提供上述组件的桌面环境。音效自动附着于内置扬声器，系统中照常选择真实输出设备。切换到耳机、蓝牙或 HDMI 时使用对应设备的原有音频路径；切回扬声器后自动恢复音效。
+目前已验证机械革命无界 14X Pro（Senary 声卡，子系统 ID `1D05E022`）与机械革命 XINGYAO Series P916F（Realtek ALC256，子系统 ID `1D05E004`）的内置扬声器。需要 x86_64、PipeWire、PipeWire Pulse、WirePlumber 0.5 或更新版本，以及 systemd 用户会话。界面使用 Qt，支持 KDE、GNOME 及其他提供上述组件的桌面环境。音效自动附着于内置扬声器，系统中照常选择真实输出设备。切换到耳机、蓝牙或 HDMI 时使用对应设备的原有音频路径；切回扬声器后自动恢复音效。
 
 ## 让 AI 帮你安装或适配
 

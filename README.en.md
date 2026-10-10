@@ -20,7 +20,7 @@ yay -S nahimic-linux
 
 Alternatively, use `paru -S nahimic-linux`. Installation downloads the required runtime components, identifies supported speakers, and starts the audio service. Open **Nahimic** from your application menu or run `nahimic`. Initial runtime setup may take a moment.
 
-Currently tested on the built-in speakers of the **MECHREVO Wujie 14X Pro (机械革命无界 14X Pro)** with Senary audio, subsystem ID `1D05E022`. Requires x86_64 Linux, PipeWire, PipeWire Pulse, WirePlumber 0.5 or newer, and a systemd user session. The Qt interface works with KDE, GNOME, and other desktop environments that provide these components. Effects attach automatically to the built-in speakers while you select real output devices as usual. Headphones, Bluetooth devices, and HDMI outputs use their own audio paths. Effects resume automatically when the speakers return.
+Currently tested on the built-in speakers of the **MECHREVO Wujie 14X Pro (机械革命无界 14X Pro)** with Senary audio, subsystem ID `1D05E022`, and of the **MECHREVO XINGYAO Series P916F** with Realtek ALC256, subsystem ID `1D05E004`. Requires x86_64 Linux, PipeWire, PipeWire Pulse, WirePlumber 0.5 or newer, and a systemd user session. The Qt interface works with KDE, GNOME, and other desktop environments that provide these components. Effects attach automatically to the built-in speakers while you select real output devices as usual. Headphones, Bluetooth devices, and HDMI outputs use their own audio paths. Effects resume automatically when the speakers return.
 
 ## Recommended: let an AI assistant install or adapt it
 

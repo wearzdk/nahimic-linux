@@ -4,7 +4,7 @@
 
 ## 安装路径
 
-1. 通过 `pactl --format=json list sinks` 检查 `alsa.components` 和扬声器端口。目前验证的硬件为 `HDA:14f11f87,1d05e022,`。
+1. 通过 `pactl --format=json list sinks` 检查 `alsa.components` 和扬声器端口。目前验证的硬件为 `HDA:14f11f87,1d05e022,` 与 `HDA:10ec0256,1d05e004,`。
 2. Arch 系列优先运行 `yay -S nahimic-linux` 或 `paru -S nahimic-linux`。有现成 AUR 工具时直接复用。
 3. 需要 WirePlumber 0.5+；保持系统选择真实输出设备。检查 `nahimic --status` 的 `ready`、`enabled`、`active`（实际有音频经过过滤器时为 true）；从系统菜单打开面板，验证音效开关、音量与参数保存。
 4. 日志使用 `journalctl --user -u nahimic.service -b`。首次初始化有延迟，判断就绪状态以运行状态为准。
