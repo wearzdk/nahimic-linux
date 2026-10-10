@@ -40,9 +40,11 @@ public:
         if(!apo_volume_snapshot(mapped_, &state))return fail("incoherent state snapshot");
         FILETIME now;GetSystemTimeAsFileTime(&now);
         uint64_t ticks=(uint64_t(now.dwHighDateTime)<<32)|now.dwLowDateTime;
+        uint64_t age=ticks>state.timestamp_100ns?ticks-state.timestamp_100ns:0;
+        uint64_t ahead=state.timestamp_100ns>ticks?state.timestamp_100ns-ticks:0;
         if(state.magic!=APO_VOLUME_MAGIC || !state.valid || state.channels!=2 || state.muted>1 ||
            state.target[255]!=0 || target_!=state.target ||
-           ticks<state.timestamp_100ns || ticks-state.timestamp_100ns>20000000ULL ||
+           age>20000000ULL || ahead>500000ULL ||
            std::isnan(state.master_db) || state.master_db==INFINITY ||
            std::isnan(state.channel_db[0]) || state.channel_db[0]==INFINITY ||
            std::isnan(state.channel_db[1]) || state.channel_db[1]==INFINITY)
