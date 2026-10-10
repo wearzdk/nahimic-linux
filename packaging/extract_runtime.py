@@ -25,9 +25,17 @@ def extract(swc, settings, output):
             raise ValueError("Runtime settings archive is absent")
         comment = struct.unpack_from("<H", data, end + 20)[0]
         with zipfile.ZipFile(io.BytesIO(data[start:end + 22 + comment])) as archive:
-            cab = archive.read("Drivers\\EXT\\AIstone\\APO4\\NH3CNXTProductSettings.cab")
-        (work / "settings.cab").write_bytes(cab)
-        subprocess.run(["cabextract", "-q", "-d", str(work / "factory"), str(work / "settings.cab")], check=True)
+            # Both AIstone APO4 cabinets carry the same global, metadata and
+            # profile files and only differ in their Devices/*.nsx. The cabinet
+            # of the already verified hardware is extracted last so the pinned
+            # manifest keeps describing those shared files.
+            settings_cabs = {
+                "settings-nh3.cab": "Drivers\\EXT\\AIstone\\APO4\\NH3ProductSettings.cab",
+                "settings-cnxt.cab": "Drivers\\EXT\\AIstone\\APO4\\NH3CNXTProductSettings.cab",
+            }
+            for name, member in settings_cabs.items():
+                (work / name).write_bytes(archive.read(member))
+                subprocess.run(["cabextract", "-q", "-d", str(work / "factory"), str(work / name)], check=True)
         for name, expected in manifest.items():
             group, relative = name.split("/", 1)
             source = work / ("swc" if group == "vendor" else "factory") / relative

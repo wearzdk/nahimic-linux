@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'host'))
-from desktop_audio import DesktopAudio, OutputUnavailable
+from desktop_audio import DesktopAudio, OutputUnavailable, device_settings, supported_speaker
 from run_local import linked_channels
 
 
@@ -83,6 +83,19 @@ class RoutingTest(unittest.TestCase):
         self.physical['active_port'] = '[Out] Headphones'
         with self.assertRaises(OutputUnavailable): self.router.tick()
         self.run.assert_not_called()
+
+    def test_each_verified_hardware_keeps_its_own_device_settings(self):
+        alc256 = {'name': 'speaker', 'active_port': '[Out] Speaker',
+                  'properties': {'alsa.components': 'HDA:10ec0256,1d05e004,00100002'}}
+        self.assertEqual(device_settings(alc256), '1D05E004_InternalSpeakers.nsx')
+        self.assertTrue(supported_speaker(alc256))
+        alc256['active_port'] = '[Out] Headphones'
+        self.assertFalse(supported_speaker(alc256))
+        self.assertEqual(device_settings(self.physical), '1D05E022_Speakers.nsx')
+        hdmi = {'active_port': '[Out] Speaker',
+                'properties': {'alsa.components': 'HDA:1002aa01,00aa0100,00100900'}}
+        self.assertIsNone(device_settings(hdmi))
+        self.assertFalse(supported_speaker(hdmi))
 
     def test_invalid_target_properties_are_rejected(self):
         self.virtual['properties']['filter.smart.target'] = '{}'

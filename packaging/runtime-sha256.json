@@ -12,6 +12,7 @@
   "vendor/NhNotifSysApp.resources.zh-hant.dll": "e058e09d6e99416addc414d41db8a66265a52a9ffe596e3cc5b84f9715610530",
   "factory/Global.nsx": "72cc2824e0fa4e61e652b9e2d5a86ebc7b862450e514ebade78e473b2c7abe10",
   "factory/Metadata.nsx": "28e0635deaaf0fc0e5ef81978a6e4f208cf8f8c449a7b78d8ca3bd430660144d",
+  "factory/Devices/1D05E004_InternalSpeakers.nsx": "594eedd6d05447b4cedfadb5141f55abdd1712decc714edffe8287786fdfa965",
   "factory/Devices/1D05E022_Speakers.nsx": "d6db544826b0f227a320ab4308f0b69f5e6c0d4406e5b6564e5cea35097aa9f2",
   "factory/AudioProfiles/Music.nsx": "8fdbe2ea702880d5e807a18fd0c879383aa18aa47aebd40589a20d46b079c4db",
   "factory/AudioProfiles/Movie.nsx": "979250993a61ebaabd545e5b52703fe9ca5d41f3d895d7d5b9bbcc75981e46d4",

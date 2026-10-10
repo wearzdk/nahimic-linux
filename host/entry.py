@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
-from desktop_audio import atomic_json, pulse, supported_speaker
+from desktop_audio import SUPPORTED_SPEAKERS, atomic_json, pulse, supported_speaker
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "nahimic-linux"
@@ -20,7 +20,8 @@ def detect():
     sinks = json.loads(pulse("--format=json", "list", "sinks"))
     matches = [s for s in sinks if supported_speaker(s)]
     if len(matches) != 1:
-        raise RuntimeError("未找到受支持的内置扬声器（1D05E022）。请选择扬声器输出后重试。")
+        supported = "、".join(settings.split("_")[0] for settings in SUPPORTED_SPEAKERS.values())
+        raise RuntimeError(f"未找到受支持的内置扬声器（{supported}）。请选择扬声器输出后重试。")
     return matches[0]["name"]
 
 

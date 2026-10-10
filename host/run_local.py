@@ -14,7 +14,7 @@ from prepare_settings import prepare
 
 def wine_path(path):
     return 'Z:' + str(path).replace('/', '\\')
-from desktop_audio import DesktopAudio, OutputUnavailable, supported_speaker
+from desktop_audio import DesktopAudio, OutputUnavailable, device_settings, supported_speaker
 
 def linked_channels(listing, sink, target, monitor=None, render=True):
     """Require both directed stereo connections, including port identities."""
@@ -63,7 +63,8 @@ def main():
         raise OutputUnavailable('The configured speaker output is unavailable')
     target = matches[0]
     if not supported_speaker(target):
-        raise RuntimeError('This launcher currently verifies only the original 1D05E022 speaker endpoint')
+        raise RuntimeError('This launcher only runs on a supported built-in speaker endpoint')
+    device_file = device_settings(target)
     dll_sha256 = hashlib.sha256(dll.read_bytes()).hexdigest()
     if args.reuse_session:
         previous_path = args.reuse_session.resolve(strict=True)
@@ -83,7 +84,7 @@ def main():
         if settings.exists():
             settings.rename(work / ('settings-previous-' + str(time.time_ns())))
         prepare(original, settings)
-    device = ET.parse(settings / 'Devices' / '1D05E022_Speakers.nsx').findtext('Data/ID/Value')
+    device = ET.parse(settings / 'Devices' / device_file).findtext('Data/ID/Value')
     profile_name = args.profile or 'Music'
     profile = ET.parse(settings / 'AudioProfiles' / f'{profile_name}.nsx').findtext('Data/ID/Value')
     if not device or not profile:
@@ -143,7 +144,7 @@ def main():
                 raise TimeoutError('Native endpoint state initialization')
             time.sleep(0.05)
         state['volume_state'] = str(volume_path)
-        configuration = ['--use-existing-settings'] if args.reuse_session else ['--settings-root', wine_path(settings), '--device-id', device, '--profile-id', profile]
+        configuration = ['--use-existing-settings'] if args.reuse_session else ['--settings-root', wine_path(settings), '--device-file', device_file, '--device-id', device, '--profile-id', profile]
         host = start('host', ['wine', str(exe), wine_path(dll), '--wine-setup-compat', '--class', 'CHAIN', *configuration, '--pulse-target', args.target, '--volume-state', wine_path(volume_path), '--stdio'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
         deadline = time.monotonic() + 45
         while 'stream_ready' not in (work / 'host.log').read_text(errors='replace'):

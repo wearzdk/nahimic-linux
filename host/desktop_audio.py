@@ -24,8 +24,23 @@ class OutputUnavailable(RuntimeError):
     """The configured speaker endpoint is temporarily unavailable."""
 
 
+# Hardware-matched built-in speakers and the factory device settings each one
+# imports. Adding an entry requires a verified hardware ID, output port and
+# local playback test; see AGENTS.md.
+SUPPORTED_SPEAKERS = {
+    "hda:14f11f87,1d05e022,": "1D05E022_Speakers.nsx",
+    "hda:10ec0256,1d05e004,": "1D05E004_InternalSpeakers.nsx",
+}
+
+
+def device_settings(sink):
+    components = sink.get("properties", {}).get("alsa.components", "").lower()
+    return next((settings for prefix, settings in SUPPORTED_SPEAKERS.items()
+                 if prefix in components), None)
+
+
 def supported_speaker(sink):
-    return ("hda:14f11f87,1d05e022," in sink.get("properties", {}).get("alsa.components", "").lower()
+    return (device_settings(sink) is not None
             and sink.get("active_port") == "[Out] Speaker")
 
 
