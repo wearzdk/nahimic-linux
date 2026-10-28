@@ -21,7 +21,10 @@ PROFILES = {
 
 class Backend:
     def control(self, *args):
-        api = "Z:" + str(Path("/usr/share/nahimic-linux/vendor/NahimicAPO4API.dll")).replace("/", "\\")
+        installation = json.loads((DATA / "installation.json").read_text())
+        api_file = ("vendor-apo3/NAHIMICV3NSControl.dll" if installation.get("runtime") == "apo3"
+                    else "vendor/NahimicAPO4API.dll")
+        api = "Z:" + str(Path("/usr/share/nahimic-linux") / api_file).replace("/", "\\")
         result = subprocess.run(["wine", str(Path(__file__).resolve().parents[1] / "bin/apo_control.exe"), api, *args],
                                 env=os.environ | {"WINEPREFIX": str(RUNTIME / "prefix"), "WINEDEBUG": "-all",
                                                   "WINEDLLOVERRIDES": "mscoree,mshtml="},

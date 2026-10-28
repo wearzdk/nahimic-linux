@@ -33,12 +33,19 @@ def extract(swc, settings, output):
                 "settings-nh3.cab": "Drivers\\EXT\\AIstone\\APO4\\NH3ProductSettings.cab",
                 "settings-cnxt.cab": "Drivers\\EXT\\AIstone\\APO4\\NH3CNXTProductSettings.cab",
             }
+            (work / "settings-msi-apo3.cab").write_bytes(archive.read("Drivers\\EXT\\MSI\\APO3\\NH3ProductSettings.cab"))
+            subprocess.run(["cabextract", "-q", "-d", str(work / "factory-apo3"), str(work / "settings-msi-apo3.cab")], check=True)
+            for member in archive.namelist():
+                if member.startswith("Drivers\\APO3\\") and member.endswith(".dll"):
+                    target = work / "vendor-apo3" / member.split("\\")[-1]
+                    target.parent.mkdir(exist_ok=True)
+                    target.write_bytes(archive.read(member))
             for name, member in settings_cabs.items():
                 (work / name).write_bytes(archive.read(member))
                 subprocess.run(["cabextract", "-q", "-d", str(work / "factory"), str(work / name)], check=True)
         for name, expected in manifest.items():
             group, relative = name.split("/", 1)
-            source = work / ("swc" if group == "vendor" else "factory") / relative
+            source = work / ("swc" if group == "vendor" else group) / relative
             if hashlib.sha256(source.read_bytes()).hexdigest() != expected:
                 raise ValueError("Runtime checksum mismatch: " + name)
             target = output / name

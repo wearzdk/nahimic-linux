@@ -64,7 +64,7 @@ def main():
         raise OutputUnavailable('The configured speaker output is unavailable')
     target = matches[0]
     if not supported_speaker(target, cards):
-        raise RuntimeError('This launcher only runs on a supported built-in speaker endpoint')
+        raise RuntimeError('This launcher only runs on a supported speaker endpoint')
     device_file = device_settings(target)
     dll_sha256 = hashlib.sha256(dll.read_bytes()).hexdigest()
     if args.reuse_session:
@@ -171,7 +171,14 @@ def main():
         state['module'] = module
         capture_sink = sink
         common = ['pw-cat', '--raw', '--format', 'f32', '--rate', '48000', '--channels', '2', '--channel-map', 'FL,FR', '--latency', '1024']
-        render = start('render', ['pacat', '--playback', '--raw', '--format=float32le', '--rate=48000', '--channels=2', '--channel-map=front-left,front-right', '--latency-msec=80', '--process-time-msec=10', '--device', args.target, '--client-name=Nahimic playback', f'--property=node.name={sink}_render', f'--property=node.link-group={sink}', '--property=node.linger=true', '--property=node.dont-fallback=true'], stdin=host.stdout, stdout=subprocess.DEVNULL)
+        if dll.name.lower() == 'nahimicv3apo.dll':
+            # Native PipeWire playback can remain unlinked while bypassed.
+            # A Pulse stream created in that state times out before connecting.
+            render_command = common + ['--playback', '--target', args.target, '--properties',
+                f'{{ node.name = {sink}_render node.link-group = {sink} node.linger = true node.dont-fallback = true }}', '-']
+        else:
+            render_command = ['pacat', '--playback', '--raw', '--format=float32le', '--rate=48000', '--channels=2', '--channel-map=front-left,front-right', '--latency-msec=80', '--process-time-msec=10', '--device', args.target, '--client-name=Nahimic playback', f'--property=node.name={sink}_render', f'--property=node.link-group={sink}', '--property=node.linger=true', '--property=node.dont-fallback=true']
+        render = start('render', render_command, stdin=host.stdout, stdout=subprocess.DEVNULL)
         host.stdout.close()
         capture = start('capture', common + ['--record', '--target', capture_sink, '--properties', f'{{ node.name = {sink}_capture stream.capture.sink = true node.dont-reconnect = true }}', '-'], stdin=subprocess.DEVNULL, stdout=host.stdin)
         host.stdin.close()
@@ -209,7 +216,7 @@ def main():
         current_cards = json.loads(subprocess.run(['pactl', '--format=json', 'list', 'cards'], check=True, capture_output=True, text=True, timeout=5).stdout)
         if not any(s['name'] == args.target and supported_speaker(s, current_cards) for s in current_sinks):
             success = True
-            raise OutputUnavailable('Waiting for the configured built-in speakers') from None
+            raise OutputUnavailable('Waiting for the configured speaker output') from None
         raise
     finally:
         state['ready'] = False

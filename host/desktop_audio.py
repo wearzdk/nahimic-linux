@@ -33,15 +33,30 @@ SUPPORTED_SPEAKERS = {
 }
 
 
+# Exact desktop codec/subsystem and Line Out only; never apply laptop tuning.
+LINE_OUT_COMPONENT = "hda:10ec1220,1462cc35,"
+
+def runtime_generation(sink):
+    return "apo3" if LINE_OUT_COMPONENT in sink.get("properties", {}).get("alsa.components", "").lower() else "apo4"
+
+
+def runtime_files(sink):
+    if runtime_generation(sink) == "apo3":
+        return "vendor-apo3/NAHIMICV3apo.dll", "vendor-apo3/NAHIMICV3NSControl.dll", "factory-apo3"
+    return "vendor/NahimicAPO4.dll", "vendor/NahimicAPO4API.dll", "factory"
+
+
 def device_settings(sink):
     components = sink.get("properties", {}).get("alsa.components", "").lower()
+    if LINE_OUT_COMPONENT in components:
+        return "Generic_ExternalSpeakers.nsx"
     return next((settings for prefix, settings in SUPPORTED_SPEAKERS.items()
                  if prefix in components), None)
 
 
 def speaker_endpoint(sink):
     return (device_settings(sink) is not None
-            and sink.get("active_port") == "[Out] Speaker")
+            and sink.get("active_port") == ("analog-output-lineout" if runtime_generation(sink) == "apo3" else "[Out] Speaker"))
 
 
 def card_ports(card):
@@ -115,7 +130,7 @@ class DesktopAudio:
         sinks = self.sinks()
         physical = sinks.get(self.target)
         if physical is None or not supported_speaker(physical, self.cards()):
-            raise OutputUnavailable("Waiting for the configured built-in speakers")
+            raise OutputUnavailable("Waiting for the configured speaker output")
         virtual = sinks[self.sink]
         properties = virtual["properties"]
         if (properties.get("filter.smart") != "true"

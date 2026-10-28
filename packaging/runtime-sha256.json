@@ -17,5 +17,15 @@
   "factory/AudioProfiles/Music.nsx": "8fdbe2ea702880d5e807a18fd0c879383aa18aa47aebd40589a20d46b079c4db",
   "factory/AudioProfiles/Movie.nsx": "979250993a61ebaabd545e5b52703fe9ca5d41f3d895d7d5b9bbcc75981e46d4",
   "factory/AudioProfiles/Gaming.nsx": "058d1f10358bb1287aa825d462dcdf06ba260f7e0bcd398628a0fceb6832ad3f",
-  "factory/AudioProfiles/Communication.nsx": "438031aabd60aaee4bc4ddfb50863743f1ee5d14514b4bf32e6facd3aab52dc0"
+  "factory/AudioProfiles/Communication.nsx": "438031aabd60aaee4bc4ddfb50863743f1ee5d14514b4bf32e6facd3aab52dc0",
+  "vendor-apo3/NAHIMICV3apo.dll": "661bd44947d45bd3db6a9615316a09969c78a501bd22b07ab8be360f7c947542",
+  "vendor-apo3/NAHIMICV3NSControl.dll": "2e68064f6e4ada968511610d5eca9199697af19625f0f33c93427f7449d067ec",
+  "vendor-apo3/NAHIMICV3NSControlExpert.dll": "9d29ee704239498e8b63771dd132f76e61abb4ba1e7d5b46366470ae2d69b415",
+  "factory-apo3/Global.nsx": "a874e4da86b9772985fd6302e4b5b15625ba3a1ff134297b1fb7459d78363781",
+  "factory-apo3/Metadata.nsx": "fa8e576df2efac008abb532a359ddf2cd9de5a2a3451bdefe0a080a54d5d5e64",
+  "factory-apo3/Devices/Generic_ExternalSpeakers.nsx": "d62e1826531605c9e90978f83af23e5184702ddb8da7fb2b2f371aee78b92ea9",
+  "factory-apo3/AudioProfiles/Music.nsx": "34a34c4470197e885562b23c72e98ddcaedb6c4307fd06cc6c4a195de052684e",
+  "factory-apo3/AudioProfiles/Movie.nsx": "7fcb5a607eccadda15a40c27db5cf21b8c6392afc71f5a7bcf7e48d6cb5719e6",
+  "factory-apo3/AudioProfiles/Gaming.nsx": "b79d40b7b877739fff1641f5dfbe8196a607d6f9cee958154ef8f95ed27c96eb",
+  "factory-apo3/AudioProfiles/Communication.nsx": "d5d741ad0c25802ed55e56351301b43f0190d47f4a8731a068a21f67db1256b4"
 }

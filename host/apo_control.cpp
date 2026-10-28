@@ -1,3 +1,4 @@
+#include "runtime.hpp"
 #include <windows.h>
 #include <objbase.h>
 #include <cstdio>
@@ -69,12 +70,22 @@ static bool describe_array(ControlSetting* setting,VARTYPE type,HRESULT(STDMETHO
     }
     return check("SafeArrayDestroy",SafeArrayDestroy(value.data)) && valid;
 }
+static const wchar_t* canonical_setting(const wchar_t* name){
+    // Keep the Qt control vocabulary stable across runtime generations.
+    static std::wstring canonical;
+    if(runtime.apo3 && name){
+        if(!wcscmp(name,L"kNhSet_ClarityState"))return L"kSet_VoiceBoostState";
+        if(!wcscmp(name,L"kNhSet_ClarityVoiceGainDB"))return L"kSet_VoiceBoostGainDB";
+    }
+    if(runtime.apo3 && name && !wcsncmp(name,L"kNhSet_",7)){canonical=L"kSet_"+std::wstring(name+7);return canonical.c_str();}
+    return name?name:L"";
+}
 static bool describe_setting(ControlSetting* setting){
     LONG id=0,type=0,kind=0,source=0;VARIANT_BOOL state=VARIANT_FALSE;BSTR name=nullptr;
     if(!check("GetSettingId",setting->GetSetting(&id)) || !check("GetSettingType",setting->GetType(&type)) ||
        !check("GetSettingClass",setting->GetClass(&kind)) || !check("GetSettingSource",setting->GetSource(&source)) ||
        !check("GetSettingState",setting->GetState(&state)) || !check("GetSettingName",setting->GetName(&name)))return false;
-    std::printf("setting id=%ld type=%ld class=%ld source=%ld state=%u name=%ls",id,type,kind,source,state!=VARIANT_FALSE,name?name:L"");
+    std::printf("setting id=%ld type=%ld class=%ld source=%ld state=%u name=%ls",id,type,kind,source,state!=VARIANT_FALSE,canonical_setting(name));
     SysFreeString(name);bool valid=true;
     if(type==0){
         VARIANT_BOOL value=VARIANT_FALSE,def=VARIANT_FALSE;
@@ -117,7 +128,7 @@ static bool set_setting(ControlStore* store,const wchar_t* key,const wchar_t* te
     for(LONG i=0;i<count;++i){
         ControlSetting* setting=nullptr;if(!check("GetSetting",store->GetSetting(i,&setting)))return false;
         BSTR name=nullptr;HRESULT hr=setting->GetName(&name);
-        bool match=SUCCEEDED(hr) && name && wcscmp(name,key)==0;SysFreeString(name);
+        bool match=SUCCEEDED(hr) && name && wcscmp(canonical_setting(name),key)==0;SysFreeString(name);
         if(FAILED(hr)){setting->Release();return false;}
         if(!match){setting->Release();continue;}
         LONG type=0;hr=setting->GetType(&type);
@@ -141,15 +152,15 @@ static bool set_setting(ControlStore* store,const wchar_t* key,const wchar_t* te
 static bool describe_device(const wchar_t* api_path,GUID id){
     std::wstring path=api_path;auto separator=path.find_last_of(L"\\/");
     if(separator==std::wstring::npos)return false;
-    path=path.substr(0,separator+1)+L"NahimicAPO4ExpertAPI.dll";
+    path=path.substr(0,separator+1)+runtime.expert();
     HMODULE library=LoadLibraryExW(path.c_str(),nullptr,LOAD_WITH_ALTERED_SEARCH_PATH);if(!library)return false;
     using Factory=HRESULT(WINAPI*)(REFCLSID,REFIID,void**);
     FARPROC proc=GetProcAddress(library,"DllGetClassObject");Factory factory=nullptr;
     static_assert(sizeof(proc)==sizeof(factory));std::memcpy(&factory,&proc,sizeof(proc));
     CLSID cls{};IID iid{},device_iid{};
-    CLSIDFromString(L"{CDF28580-2862-11E9-B56E-0800200C9A66}",&cls);
-    CLSIDFromString(L"{CDF25E70-2862-11E9-B56E-0800200C9A66}",&iid);
-    CLSIDFromString(L"{E1AA2100-2862-11E9-B56E-0800200C9A66}",&device_iid);
+    CLSIDFromString(runtime.expert_class(),&cls);
+    CLSIDFromString(runtime.expert_interface(),&iid);
+    CLSIDFromString(runtime.device_interface(),&device_iid);
     IClassFactory* cf=nullptr;ExpertControl* expert=nullptr;IDispatch* dispatch=nullptr;
     ExpertDevice* device=nullptr;ControlStore* store=nullptr;bool valid=false;
     do {
@@ -195,6 +206,7 @@ int wmain(int argc,wchar_t** argv){
     if(!dedicated_prefix()){
         std::fprintf(stderr,"Requires an existing dedicated Nahimic Wine prefix\n");return 1;
     }
+    runtime.select(argv[1]);
     GUID selected{};
     if((select_profile || device_settings || app_profile) && FAILED(CLSIDFromString(argv[3],&selected)))return 2;
     GUID target_profile{};
@@ -207,8 +219,8 @@ int wmain(int argc,wchar_t** argv){
     FARPROC proc=GetProcAddress(library,"DllGetClassObject");Factory factory=nullptr;
     static_assert(sizeof(proc)==sizeof(factory));std::memcpy(&factory,&proc,sizeof(proc));
     CLSID cls{};IID iid{};
-    CLSIDFromString(L"{7E4EF2C1-2862-11E9-B56E-0800200C9A66}",&cls);
-    CLSIDFromString(L"{7E4EF2C0-2862-11E9-B56E-0800200C9A66}",&iid);
+    CLSIDFromString(runtime.control_class(),&cls);
+    CLSIDFromString(runtime.control_interface(),&iid);
     IClassFactory* cf=nullptr;OriginalControl* control=nullptr;ControlApplication* application=nullptr;
     ControlProfile* profile=nullptr;bool valid=false;
     do {

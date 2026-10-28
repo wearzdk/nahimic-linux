@@ -153,3 +153,24 @@ class RoutingTest(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
+
+class MsiLineOutTest(unittest.TestCase):
+    def sink(self, port='analog-output-lineout', components='HDA:10ec1220,1462cc35,00100101'):
+        return {'active_port': port, 'properties': {'alsa.components': components},
+                'ports': [{'name': 'analog-output-headphones', 'type': 'Headphones',
+                           'availability': 'not available'}]}
+
+    def test_exact_lineout_uses_apo3_external_profile(self):
+        from desktop_audio import runtime_files
+        sink = self.sink()
+        self.assertTrue(supported_speaker(sink, []))
+        self.assertEqual(device_settings(sink), 'Generic_ExternalSpeakers.nsx')
+        self.assertEqual(runtime_files(sink), ('vendor-apo3/NAHIMICV3apo.dll',
+                         'vendor-apo3/NAHIMICV3NSControl.dll', 'factory-apo3'))
+
+    def test_headphones_and_other_boards_are_excluded(self):
+        self.assertFalse(supported_speaker(self.sink('analog-output-headphones'), []))
+        self.assertFalse(supported_speaker(self.sink(components='HDA:10ec1220,1462cc36,00100101'), []))
+        sink = self.sink()
+        sink['ports'][0]['availability'] = 'available'
+        self.assertFalse(supported_speaker(sink, []))

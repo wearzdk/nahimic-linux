@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
-from desktop_audio import SUPPORTED_SPEAKERS, atomic_json, pulse, speaker_endpoint, supported_speaker
+from desktop_audio import SUPPORTED_SPEAKERS, atomic_json, pulse, speaker_endpoint, supported_speaker, runtime_files, runtime_generation
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "nahimic-linux"
@@ -20,8 +20,8 @@ def detect():
     sinks = json.loads(pulse("--format=json", "list", "sinks"))
     matches = [s for s in sinks if speaker_endpoint(s)]
     if len(matches) != 1:
-        supported = "、".join(settings.split("_")[0] for settings in SUPPORTED_SPEAKERS.values())
-        raise RuntimeError(f"未找到受支持的内置扬声器（{supported}）。请选择扬声器输出后重试。")
+        supported = "、".join(settings.split("_")[0] for settings in SUPPORTED_SPEAKERS.values()) + "、1462CC35"
+        raise RuntimeError(f"未找到受支持的扬声器或线路输出（{supported}）。请选择扬声器输出后重试。")
     return matches[0]["name"]
 
 
@@ -43,7 +43,10 @@ def initialize():
     marker(RUNTIME / "prefix/.nahimic-linux-owner")
     if not (RUNTIME / "preferences.json").exists():
         atomic_json(RUNTIME / "preferences.json", {"enabled": True})
-    atomic_json(DATA / "installation.json", {"version": "0.3.2", "target": target})
+    sinks = json.loads(pulse("--format=json", "list", "sinks"))
+    physical = next(s for s in sinks if s["name"] == target)
+    atomic_json(DATA / "installation.json", {"version": "0.3.2", "target": target,
+                                             "runtime": runtime_generation(physical)})
     return target
 
 
@@ -113,10 +116,12 @@ def serve():
         if stopped:
             return
         atomic_json(RUNTIME / "desktop-state.json", {"waiting_for_speakers": False})
+        physical = next(s for s in sinks if s["name"] == target)
+        dll, _, factory = runtime_files(physical)
         child = subprocess.Popen([sys.executable, str(ROOT / "host/run_local.py"),
                  "--exe", str(ROOT / "bin/apo_probe.exe"),
-                 "--dll", str(SHARE / "vendor/NahimicAPO4.dll"),
-                 "--settings", str(SHARE / "factory"), "--target", target,
+                 "--dll", str(SHARE / dll),
+                 "--settings", str(SHARE / factory), "--target", target,
                  "--state-dir", str(RUNTIME)])
         if stopped:
             child.terminate()

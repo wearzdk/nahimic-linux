@@ -31,5 +31,5 @@ build() {
 package() {
     make -C "$srcdir/$pkgname" DESTDIR="$pkgdir" install
     install -d "$pkgdir/usr/share/nahimic-linux"
-    cp -r "$srcdir/runtime/vendor" "$srcdir/runtime/factory" "$pkgdir/usr/share/nahimic-linux/"
+    cp -r "$srcdir/runtime/vendor" "$srcdir/runtime/factory" "$srcdir/runtime/vendor-apo3" "$srcdir/runtime/factory-apo3" "$pkgdir/usr/share/nahimic-linux/"
 }

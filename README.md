@@ -58,6 +58,12 @@ makepkg -si
 
 构建会从 Microsoft Update 和 Nahimic 官方支持站点获取固定版本组件，并验证归档及实际使用文件的 SHA-256。界面与宿主程序通过 `make` 构建，`make DESTDIR=/tmp/nahimic-stage install` 可检查系统包目录布局。完整安装以 PKGBUILD 为准。
 
+## MSI MEG X570 UNIFY 线路输出
+
+MSI MEG X570 UNIFY（MS-7C35，Realtek ALC1220，子系统 ID `1462CC35`）使用原厂 APO3 运行组件与 `Generic_ExternalSpeakers` 配置。仅匹配 `HDA:10ec1220,1462cc35,` 和 `analog-output-lineout` 端口；插入耳机时旁路音效，HDMI 等其他输出保持原有路径，不套用笔记本扬声器配置。
+
+APO3 文件来自现有固定版本恢复工具归档，与 APO4 的运行组件、原厂设置分开保存。控制面板保持现有操作，APO3 的 Clarity 对应人声调节。
+
 ## 贡献设备适配
 
 请先阅读 [AGENTS.md](AGENTS.md)。提交机器型号、声卡硬件 ID、PipeWire 输出信息，以及音效开关、参数保存、服务重启和连续播放的测试结果。每个型号使用与硬件匹配的配置，新增支持以本机验证为依据。

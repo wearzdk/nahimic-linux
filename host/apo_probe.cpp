@@ -19,6 +19,7 @@
 #include "control_abi.hpp"
 #include "native_volume.hpp"
 #include "dedicated_prefix.hpp"
+#include "runtime.hpp"
 
 struct IAudioMediaType;
 struct Registration {
@@ -166,15 +167,15 @@ static bool initialize_profile_links(const wchar_t* apo_path,const wchar_t* prof
     GUID selected{};if(FAILED(CLSIDFromString(profile_id,&selected)))return false;
     std::wstring path=apo_path;auto separator=path.find_last_of(L"\\/");
     if(separator==std::wstring::npos)return false;
-    path=path.substr(0,separator+1)+L"NahimicAPO4API.dll";
+    path=path.substr(0,separator+1)+runtime.api();
     HMODULE library=LoadLibraryExW(path.c_str(),nullptr,LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!library)return false;
     using Factory=HRESULT(WINAPI*)(REFCLSID,REFIID,void**);
     FARPROC proc=GetProcAddress(library,"DllGetClassObject");Factory factory=nullptr;
     static_assert(sizeof(proc)==sizeof(factory));std::memcpy(&factory,&proc,sizeof(proc));
     CLSID cls{};IID iid{};
-    CLSIDFromString(L"{7E4EF2C1-2862-11E9-B56E-0800200C9A66}",&cls);
-    CLSIDFromString(L"{7E4EF2C0-2862-11E9-B56E-0800200C9A66}",&iid);
+    CLSIDFromString(runtime.control_class(),&cls);
+    CLSIDFromString(runtime.control_interface(),&iid);
     IClassFactory* cf=nullptr;OriginalControl* control=nullptr;
     ControlProfile* profile=nullptr;ControlApplication* application=nullptr;HRESULT hr=E_FAIL;
     do {
@@ -197,7 +198,7 @@ static bool initialize_profile_links(const wchar_t* apo_path,const wchar_t* prof
 
 static bool product_ready(bool& ready){
     DWORD value=0,size=sizeof(value);
-    LSTATUS result=RegGetValueW(HKEY_LOCAL_MACHINE,L"Software\\Nahimic\\NahimicAPO4\\A-Volute.Nahimic",L"AppIsReady",RRF_RT_REG_DWORD,nullptr,&value,&size);
+    LSTATUS result=RegGetValueW(HKEY_LOCAL_MACHINE,runtime.product_key(),L"AppIsReady",RRF_RT_REG_DWORD,nullptr,&value,&size);
     ready=false;
     if(result==ERROR_FILE_NOT_FOUND || result==ERROR_PATH_NOT_FOUND)return true;
     status("ReadProductReady",HRESULT_FROM_WIN32(result));if(result!=ERROR_SUCCESS)return false;
@@ -213,7 +214,7 @@ static bool configure_original(const wchar_t* apo_path,const wchar_t* root,const
     std::wstring path=apo_path;
     auto separator=path.find_last_of(L"\\/");
     if (separator==std::wstring::npos) return false;
-    path=path.substr(0,separator+1)+L"NahimicAPO4ExpertAPI.dll";
+    path=path.substr(0,separator+1)+runtime.expert();
     library=LoadLibraryExW(path.c_str(),nullptr,LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!library) {std::fprintf(stderr,"LoadExpert error=%lu\n",GetLastError());return false;}
     using Factory=HRESULT (WINAPI*)(REFCLSID,REFIID,void**);
@@ -221,7 +222,7 @@ static bool configure_original(const wchar_t* apo_path,const wchar_t* root,const
     static_assert(sizeof(proc)==sizeof(factory));std::memcpy(&factory,&proc,sizeof(proc));
     if (!factory) return false;
     CLSID cls{};IID iface{};
-    if (FAILED(CLSIDFromString(L"{CDF28580-2862-11E9-B56E-0800200C9A66}",&cls)) || FAILED(CLSIDFromString(L"{CDF25E70-2862-11E9-B56E-0800200C9A66}",&iface)))return false;
+    if (FAILED(CLSIDFromString(runtime.expert_class(),&cls)) || FAILED(CLSIDFromString(runtime.expert_interface(),&iface)))return false;
     IClassFactory* cf=nullptr;HRESULT hr=factory(cls,IID_IClassFactory,reinterpret_cast<void**>(&cf));
     status("ExpertFactory",hr);if(FAILED(hr))return false;
     hr=cf->CreateInstance(nullptr,iface,reinterpret_cast<void**>(&expert));cf->Release();
@@ -259,16 +260,16 @@ static bool configure_original(const wchar_t* apo_path,const wchar_t* root,const
         if(device)device->Release();
         if(FAILED(hr))return false;
         HKEY store=nullptr;
-        LSTATUS result=RegOpenKeyExW(HKEY_LOCAL_MACHINE,L"Software\\Nahimic\\NahimicAPO4\\A-Volute.Nahimic\\NahimicSettings\\GlobalControl\\Store",0,KEY_SET_VALUE,&store);
+        LSTATUS result=RegOpenKeyExW(HKEY_LOCAL_MACHINE,runtime.store_key(),0,KEY_SET_VALUE,&store);
         if(result!=ERROR_SUCCESS)return false;
         DWORD enabled=1,length=manual_length+1;
-        result=RegSetValueExW(store,L"kSet_RenderManualDeviceId",0,REG_BINARY,reinterpret_cast<const BYTE*>(manual_device),length*sizeof(wchar_t));
-        if(result==ERROR_SUCCESS)result=RegSetValueExW(store,L"kSet_RenderManualDeviceIdCount",0,REG_DWORD,reinterpret_cast<BYTE*>(&length),sizeof(length));
-        if(result==ERROR_SUCCESS)result=RegSetValueExW(store,L"kSet_RenderManualDeviceState",0,REG_DWORD,reinterpret_cast<BYTE*>(&enabled),sizeof(enabled));
+        result=RegSetValueExW(store,(runtime.apo3?L"kNhSet_NahimicRenderManualDeviceId":L"kSet_RenderManualDeviceId"),0,REG_BINARY,reinterpret_cast<const BYTE*>(manual_device),length*sizeof(wchar_t));
+        if(result==ERROR_SUCCESS)result=RegSetValueExW(store,(runtime.apo3?L"kNhSet_NahimicRenderManualDeviceIdCount":L"kSet_RenderManualDeviceIdCount"),0,REG_DWORD,reinterpret_cast<BYTE*>(&length),sizeof(length));
+        if(result==ERROR_SUCCESS)result=RegSetValueExW(store,(runtime.apo3?L"kNhSet_NahimicRenderManualDeviceState":L"kSet_RenderManualDeviceState"),0,REG_DWORD,reinterpret_cast<BYTE*>(&enabled),sizeof(enabled));
         RegCloseKey(store);status("ManualDeviceBinding",HRESULT_FROM_WIN32(result));if(result!=ERROR_SUCCESS)return false;
     }
     HKEY product_key=nullptr;
-    LSTATUS result=RegOpenKeyExW(HKEY_LOCAL_MACHINE,L"Software\\Nahimic\\NahimicAPO4\\A-Volute.Nahimic",0,KEY_SET_VALUE,&product_key);
+    LSTATUS result=RegOpenKeyExW(HKEY_LOCAL_MACHINE,runtime.product_key(),0,KEY_SET_VALUE,&product_key);
     if(result!=ERROR_SUCCESS){status("OpenProductReadyMarker",HRESULT_FROM_WIN32(result));return false;}
     DWORD ready_marker=1;
     result=RegSetValueExW(product_key,L"AppIsReady",0,REG_DWORD,reinterpret_cast<const BYTE*>(&ready_marker),sizeof(ready_marker));
@@ -431,6 +432,10 @@ int wmain(int argc, wchar_t** argv) {
     if(application_path && (!stdio_stream || selected!=0 || (!existing_settings && !settings_root) ||
        !*application_path || wcslen(application_path)>=250 || GetFileAttributesW(application_path)==INVALID_FILE_ATTRIBUTES))invalid=true;
     if (invalid) { std::fprintf(stderr, "usage: apo_probe.exe ABSOLUTE_DLL_PATH [--discover] [--wine-setup-compat] [--class SFX|MFX|MFX_CAPTURE|EFX|CHAIN|POSTMIX] [--settings-root NSX_ROOT --device-file NAME --profile-id GUID [--device-id GUID] | --use-existing-settings] [--process-impulse OUTPUT | --input-pcm INPUT --process-pcm OUTPUT | --stdio] [--application-path EXECUTABLE --application-pid PID (SFX stdio only)]\n"); return 2; }
+    runtime.select(argv[1]);
+    if(runtime.apo3 && (selected==2 || selected==3 || selected==5)){
+        std::fprintf(stderr,"APO3 provides the render SFX/MFX chain only\n");return 2;
+    }
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     HRESULT hr=CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     status("CoInitializeEx", hr);
@@ -455,7 +460,7 @@ int wmain(int argc, wchar_t** argv) {
     HMODULE library=LoadLibraryExW(argv[1], nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!library) { std::fprintf(stderr,"LoadLibrary error=%lu\n", GetLastError()); CoUninitialize(); return 1; }
     std::fprintf(stderr,"LoadLibrary=OK\n");
-    if (setup_compat && !install_wine_setup_compat(library)) {
+    if (setup_compat && !runtime.apo3 && !install_wine_setup_compat(library)) {
         std::fprintf(stderr,"Failed to install setup API compatibility.\n");
         FreeLibrary(library); CoUninitialize(); return 1;
     }
@@ -466,12 +471,13 @@ int wmain(int argc, wchar_t** argv) {
     std::memcpy(&factory_fn,&address,sizeof(address));
     if (!factory_fn) { std::fprintf(stderr,"DllGetClassObject missing\n"); FreeLibrary(library); CoUninitialize(); return 1; }
     const wchar_t* classes[]={L"{670173E3-78CF-11E5-A837-0800200C9A66}", L"{670173E4-78CF-11E5-A837-0800200C9A66}", L"{670173F4-78CF-11E5-A837-0800200C9A66}", L"{670173E5-78CF-11E5-A837-0800200C9A66}"};
+    if(runtime.apo3){classes[0]=L"{670173E1-78CF-11E5-A837-0800200C9A66}";classes[1]=L"{670173E2-78CF-11E5-A837-0800200C9A66}";}
     const char* names[]={"SFX","MFX","MFX_CAPTURE","EFX"};
     IID apo_id{};
     if (FAILED(CLSIDFromString(L"{FD7F2B29-24D0-4B5C-B177-592C39F9CA10}",&apo_id))) return 1;
     bool success=true;
     std::vector<AudioProcessingObject*> processing_apos;
-    for (unsigned i=0;i<4;++i) {
+    for (unsigned i=0;i<(runtime.apo3?2u:4u);++i) {
         if (selected==4 ? i==2 : selected==5 ? (i!=1 && i!=3) :
             selected>=0 && selected!=static_cast<int>(i)) continue;
         std::fprintf(stderr,"class=%s\n",names[i]); std::fflush(stderr);

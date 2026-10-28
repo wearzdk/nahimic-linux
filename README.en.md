@@ -60,6 +60,18 @@ makepkg -si
 
 The build downloads pinned runtime components from Microsoft Update and the official Nahimic support site, then verifies SHA-256 hashes for the archives and the runtime files used by the application. Run `make` to build the native host components. To inspect the installation layout without installing into the system, run `make DESTDIR=/tmp/nahimic-stage install`. Use the PKGBUILD for a complete installation, including runtime components.
 
+## MSI MEG X570 UNIFY Line Out
+
+The MSI MEG X570 UNIFY (MS-7C35), Realtek ALC1220 with subsystem ID
+`1462CC35`, uses the vendor APO3 runtime and its `Generic_ExternalSpeakers`
+profile. Support is restricted to `HDA:10ec1220,1462cc35,` and the
+`analog-output-lineout` port. Plugging in headphones bypasses the effects;
+HDMI and other outputs retain their normal paths. No laptop tuning is applied.
+
+The build extracts APO3 files from the same pinned restore-tool archive as the
+existing settings. APO3 and APO4 keep separate runtime files and factory
+settings. The control panel uses the same controls; APO3 Clarity maps to Voice.
+
 ## Contribute device support
 
 Read [AGENTS.md](AGENTS.md) first. Include your laptop model, audio hardware IDs, PipeWire output information, and results from testing effect switching, settings persistence, service restarts, and continuous playback. Each model needs a configuration matching its hardware. New device support should be verified on the actual machine before submitting a pull request.
