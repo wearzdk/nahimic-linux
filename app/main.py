@@ -311,7 +311,7 @@ class Panel(QMainWindow):
         self.auto.clicked.connect(lambda checked: self.submit(lambda: self.backend.autostart(checked), 'state', 'autostart', checked)); preferences_layout.addWidget(self.auto)
         note = QLabel('关闭窗口后，音效继续运行。模式和参数会自动保存。'); note.setObjectName('muted'); note.setWordWrap(True); preferences_layout.addWidget(note)
         about = QLabel('关于'); about.setObjectName('effectTitle'); preferences_layout.addWidget(about)
-        version = QLabel('Nahimic Linux  0.3.2'); version.setObjectName('caption'); preferences_layout.addWidget(version)
+        version = QLabel('Nahimic Linux  0.3.3'); version.setObjectName('caption'); preferences_layout.addWidget(version)
         disclaimer = QLabel('这是独立的社区项目，与 Nahimic、A-Volute、SteelSeries 及电脑厂商无隶属关系，也未获其认可或赞助。相关名称、商标和原厂资源归各自权利人所有。')
         disclaimer.setWordWrap(True); disclaimer.setObjectName('muted'); disclaimer.setMaximumWidth(460); preferences_layout.addWidget(disclaimer)
         close_button = QPushButton('完成'); close_button.clicked.connect(self.preferences.accept); preferences_layout.addWidget(close_button,0,Qt.AlignRight)

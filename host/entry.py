@@ -45,7 +45,7 @@ def initialize():
         atomic_json(RUNTIME / "preferences.json", {"enabled": True})
     sinks = json.loads(pulse("--format=json", "list", "sinks"))
     physical = next(s for s in sinks if s["name"] == target)
-    atomic_json(DATA / "installation.json", {"version": "0.3.2", "target": target,
+    atomic_json(DATA / "installation.json", {"version": "0.3.3", "target": target,
                                              "runtime": runtime_generation(physical)})
     return target
 
