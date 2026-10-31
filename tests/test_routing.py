@@ -152,8 +152,6 @@ class RoutingTest(unittest.TestCase):
                                          'effect', 'speaker', render=False))
 
 
-if __name__ == '__main__': unittest.main()
-
 class MsiLineOutTest(unittest.TestCase):
     def sink(self, port='analog-output-lineout', components='HDA:10ec1220,1462cc35,00100101'):
         return {'active_port': port, 'properties': {'alsa.components': components},
@@ -174,3 +172,6 @@ class MsiLineOutTest(unittest.TestCase):
         sink = self.sink()
         sink['ports'][0]['availability'] = 'available'
         self.assertFalse(supported_speaker(sink, []))
+
+
+if __name__ == '__main__': unittest.main()
