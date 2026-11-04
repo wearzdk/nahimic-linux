@@ -246,7 +246,7 @@ class Panel(QMainWindow):
         surround_text = QVBoxLayout(); surround_text.setSpacing(18)
         row=QHBoxLayout(); label=QLabel('环绕声'); label.setObjectName('effectTitle'); label.setWordWrap(True); row.addWidget(label); row.addStretch()
         switch=self.effect_switch('kSet_SpkVirtualSurroundState','启用环绕声'); row.addWidget(switch); surround_text.addLayout(row)
-        description=QLabel('让声音从四周传来，带来更有空间感的聆听体验。'); description.setObjectName('caption'); description.setWordWrap(True)
+        description=QLabel('营造环绕声场，提升空间感与临场感。'); description.setObjectName('caption'); description.setWordWrap(True)
         surround_text.addWidget(description); surround_text.addStretch(); surround_layout.addLayout(surround_text,1)
         upper.addWidget(surround,2)
         compressor=QFrame(); compressor.setObjectName('effect'); compressor_layout=QVBoxLayout(compressor); compressor_layout.setContentsMargins(22,14,14,16); compressor_layout.setSpacing(9)
@@ -254,7 +254,7 @@ class Panel(QMainWindow):
         row.addWidget(self.effect_switch('kSet_CompressorState','启用音量稳定器')); compressor_layout.addLayout(row)
         wave=QLabel(); wave.setFixedSize(100,75); wave.setAlignment(Qt.AlignCenter); compressor_layout.addWidget(wave,0,Qt.AlignHCenter)
         self.effect_images['kSet_CompressorState']=(wave,'VolumeStabiliserOn80x60.png','VolumeStabilizerOff80x60.png')
-        description=QLabel('保持音量均衡，减少声音忽大忽小。'); description.setObjectName('caption'); description.setWordWrap(True); description.setAlignment(Qt.AlignCenter); compressor_layout.addWidget(description); compressor_layout.addStretch()
+        description=QLabel('保持音量均衡，避免音量忽大忽小。'); description.setObjectName('caption'); description.setWordWrap(True); description.setAlignment(Qt.AlignCenter); compressor_layout.addWidget(description); compressor_layout.addStretch()
         upper.addWidget(compressor,1); page.addLayout(upper,1)
 
         lower=QHBoxLayout(); lower.setContentsMargins(0,0,0,0); lower.setSpacing(0)
@@ -307,9 +307,9 @@ class Panel(QMainWindow):
         for code, label in LANGUAGES.items(): self.language.addItem(label, code)
         self.language.setCurrentIndex(self.language.findData(self.translations.choice))
         self.language.activated.connect(self.change_language); language_row.addWidget(self.language,1); preferences_layout.addLayout(language_row)
-        self.auto = QCheckBox('登录后自动运行音效')
+        self.auto = QCheckBox('登录后自动启动音效')
         self.auto.clicked.connect(lambda checked: self.submit(lambda: self.backend.autostart(checked), 'state', 'autostart', checked)); preferences_layout.addWidget(self.auto)
-        note = QLabel('关闭窗口后，音效继续运行。模式和参数会自动保存。'); note.setObjectName('muted'); note.setWordWrap(True); preferences_layout.addWidget(note)
+        note = QLabel('关闭窗口后音效继续运行，模式与参数自动保存。'); note.setObjectName('muted'); note.setWordWrap(True); preferences_layout.addWidget(note)
         about = QLabel('关于'); about.setObjectName('effectTitle'); preferences_layout.addWidget(about)
         version = QLabel('Nahimic Linux  0.3.3'); version.setObjectName('caption'); preferences_layout.addWidget(version)
         disclaimer = QLabel('这是独立的社区项目，与 Nahimic、A-Volute、SteelSeries 及电脑厂商无隶属关系，也未获其认可或赞助。相关名称、商标和原厂资源归各自权利人所有。')
@@ -396,7 +396,7 @@ class Panel(QMainWindow):
 
     def show_status(self):
         if self.error_message:
-            self.translations.bind(self.status, 'text', '操作未完成：{error}', error=self.error_message)
+            self.translations.bind(self.status, 'text', '操作失败：{error}', error=self.error_message)
         elif self.pending_keys():
             if not self.busy_timer.isActive(): self.show_pending_status()
         elif self.last_status:
@@ -405,10 +405,10 @@ class Panel(QMainWindow):
                 self.translations.bind(self.status, 'text', '音效正在运行' if result['active'] else
                     '正在播放原声' if not result['enabled'] else '音效已开启，等待扬声器播放')
             elif result.get('waiting_for_speakers'):
-                self.translations.bind(self.status, 'text', '等待内置扬声器，其他输出正常使用')
+                self.translations.bind(self.status, 'text', '正在等待内置扬声器，其他输出可正常使用')
             else:
                 self.translations.bind(self.status, 'text', '正在准备音效，请稍候…' if
-                    result['service'] in ('active', 'activating') else '音效服务未运行，请关闭并重新打开软件。')
+                    result['service'] in ('active', 'activating') else '音效服务未运行，请重新启动应用。')
 
     def apply_status(self, result):
         self.last_status = result
@@ -425,7 +425,7 @@ class Panel(QMainWindow):
                 del self.awaiting_state[key]
             elif time.monotonic() >= deadline:
                 del self.awaiting_state[key]
-                self.error_message = self.translations.text('设置未获系统确认，已重新读取当前状态。')
+                self.error_message = self.translations.text('系统未确认设置，已重新读取当前状态。')
         protected = self.pending_keys()
         if 'autostart' not in protected: self.auto.setChecked(result['autostart'])
         if ready:
@@ -509,7 +509,7 @@ def main():
     socket_name=str(runtime/'nahimic-panel.socket')
     if not lock.tryLock(0):
         socket=QLocalSocket();socket.connectToServer(socket_name)
-        if not socket.waitForConnected(1000):raise RuntimeError("音效窗口已运行，但无法联系窗口")
+        if not socket.waitForConnected(1000):raise RuntimeError("音效窗口已在运行，但无法建立连接")
         socket.write(b'show');socket.waitForBytesWritten(1000)
         return
     QLocalServer.removeServer(socket_name);server=QLocalServer()
